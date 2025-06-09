@@ -1,26 +1,37 @@
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenTelemetry()
-    .WithMetrics(meterProviderBuilder =>
+    .WithMetrics(mb =>
     {
-        meterProviderBuilder
-          .AddPrometheusExporter()
-          .AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel")
-          .AddView("http.server.request.duration",
-              new ExplicitBucketHistogramConfiguration
-              {
-                  Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05,
-                      0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
-              });
+        mb.AddMeter("WebMetric.Custom");             // <- nosso Meter
+        mb.AddMeter("Microsoft.AspNetCore.Hosting"); // já existente
+        mb.AddMeter("Microsoft.AspNetCore.Server.Kestrel");
+        mb.AddPrometheusExporter();                  // exporter deve vir depois dos AddMeter
+        mb.AddView("http.server.request.duration",
+            new ExplicitBucketHistogramConfiguration
+            {
+                Boundaries = new double[] { /* ... */ }
+            });
     });
+
+// Custom metrics
+var meter = new Meter("WebMetric.Custom", "1.0.0");
+var requestCounter = meter.CreateCounter<long>("webmetric_requests_total",
+    description: "Total de requisições recebidas");
+builder.Services.AddSingleton(meter); 
 
 var app = builder.Build();
 
 // expõe /metrics para o Prometheus “scrape”
 app.MapPrometheusScrapingEndpoint();
 
-app.MapGet("/", () => "Hello OpenTelemetry! ticks:" + DateTime.Now.Ticks.ToString()[^3..]);
+app.MapGet("/", () =>
+{
+    requestCounter.Add(1);
+    return "Hello OpenTelemetry! ticks:" + DateTime.Now.Ticks.ToString()[^3..];
+});
 
 app.Run();
