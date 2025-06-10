@@ -196,3 +196,10 @@ autostudo-metrics/
         ├── prometheus-graph.png   
         └── grafana-dashboard.png  
 ```
+
+Portanto, nesta atividade, instrumentamos um aplicativo ASP.NET Core minimal com OpenTelemetry para coletar métricas de desempenho e exposição de dados via Prometheus. Configuramos o Prometheus para “scrapear” periodicamente o endpoint de métricas e validamos localmente o correto funcionamento, observando o crescimento de contadores e histogramas. Em seguida, instalamos o Grafana, adicionamos o Prometheus como fonte de dados e construímos um dashboard interativo com dois painéis principais: taxa de requisições por segundo (1 m rate) e latência P50 (5 m). Por fim, exportamos o JSON do dashboard para controle de versão, garantindo reprodutibilidade e fácil compartilhamento. Com este fluxo, temos uma solução completa e extensível para monitoramento de aplicações ASP.NET Core em produção ou ambiente de homologação.  
+
+
+
+
+
